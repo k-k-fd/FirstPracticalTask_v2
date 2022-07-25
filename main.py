@@ -59,6 +59,8 @@ def read_ra_param():
                     exit()
         except ValueError as e:
             raise Exception("Expecting numeric value!") from e
+        except:
+            raise ("Unexpected error!")
     else:
         exit()
     return ra_prm
@@ -75,6 +77,8 @@ def read_decl_param():
                     exit()
         except ValueError as e:
             raise Exception("Expecting numeric value!") from e
+        except:
+            raise ("Unexpected error!")
     return decl_prm
 
 
@@ -89,6 +93,8 @@ def read_fov_h_param():
                     exit()
         except ValueError as e:
             raise Exception("Expecting numeric value!") from e
+        except:
+            raise ("Unexpected error!")
     return fov_h_prm
 
 
@@ -103,6 +109,8 @@ def read_fov_v_param():
                     exit()
         except ValueError as e:
             raise Exception("Expecting numeric value!") from e
+        except:
+            raise ("Unexpected error!")
     return fov_v_prm
 
 
@@ -117,6 +125,8 @@ def read_top_N_param():
                     exit()
         except ValueError as e:
             raise Exception("Expecting numeric value!") from e
+        except:
+            raise ("Unexpected error!")
         return top_N_prm
 
 
