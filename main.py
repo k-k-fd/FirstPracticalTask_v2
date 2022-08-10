@@ -110,20 +110,12 @@ def read_input_file(input_file, input_file_contains_filehdr):
     return in_ds
 
 
-def min_ras(ras0, fovh):
-    return ras0 - (fovh / 2)
+def min_ras_dcl(ras0_dcl0, fovh_fovv):
+    return ras0_dcl0 - (fovh_fovv / 2)
 
 
-def max_ras(ras0, fovh):
-    return ras0 + (fovh / 2)
-
-
-def min_dcl(dcl0, fovv):
-    return dcl0 - (fovv / 2)
-
-
-def max_dcl(dcl0, fovv):
-    return dcl0 + (fovv / 2)
+def max_ras_dcl(ras0_dcl0, fovh_fovv):
+    return ras0_dcl0 + (fovh_fovv / 2)
 
 
 def check_object_in_fov(ras, dcl, minras, maxras, mindecl, maxdecl):
@@ -154,13 +146,13 @@ def process_dataset(in_ds, contains_colheaders, ra_param, decl_param,
             col_decl = float(row.get(in_cols.get('3')))
             col_bright = float(row.get(in_cols.get('4')))
             if check_object_in_fov(col_ra, col_decl,
-                                   min_ras(ra_param,
+                                   min_ras_dcl(ra_param,
                                            fov_h_param),
-                                   max_ras(ra_param,
+                                   max_ras_dcl(ra_param,
                                            fov_h_param),
-                                   min_dcl(decl_param,
+                                   min_ras_dcl(decl_param,
                                            fov_v_param),
-                                   max_dcl(decl_param,
+                                   max_ras_dcl(decl_param,
                                            fov_v_param)):
                 col_dist = calc_dist(ra_param, col_ra, decl_param, col_decl)
                 row_dict.update({'ID': col_id})
