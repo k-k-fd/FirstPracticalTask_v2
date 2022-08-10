@@ -58,66 +58,25 @@ def validate_input_file_control_num(in_file_name, file_hdr_pttrn):
             raise Exception('Wrong file header format!')
 
 
-def read_ra_param():
-    msg = "Enter RA in degrees [between 0 and 360 non-inclusive] " \
-          "(or # to exit): "
-    ra_prm = input(msg)
-    if ra_prm != '#':
+def msg_read_param(p_name, p_min, p_max):
+    return "Enter " + p_name + " in degrees "\
+        + "[between " + str(p_min) + " and " + str(p_max) + "]"\
+        + " (or # to exit): "
+
+
+def read_params(msg_to_read, p_min, p_max):
+    param = input(msg_to_read)
+    if param != '#':
         try:
-            while not (0 < float(ra_prm) < 360):
-                ra_prm = input(msg)
-                if ra_prm == '#':
+            while not (p_min <= float(param) <= p_max):
+                param = input(msg_to_read)
+                if param == '#':
                     exit()
         except ValueError as e:
             raise Exception("Expecting numeric value!") from e
     else:
         exit()
-    return ra_prm
-
-
-def read_decl_param():
-    msg = "Enter observation declination in degrees (Decl) " \
-          "[between -90 and 90 inclusive] (or # to exit): "
-    decl_prm = input(msg)
-    if decl_prm != '#':
-        try:
-            while not (-90 <= float(decl_prm) <= 90):
-                decl_prm = input(msg)
-                if decl_prm == '#':
-                    exit()
-        except ValueError as e:
-            raise Exception("Expecting numeric value!") from e
-    return decl_prm
-
-
-def read_fov_h_param():
-    msg = "Enter observation horizontal field of view (fov_h) " \
-          "[between 0 and 360 non-inclusive] (or # to exit): "
-    fov_h_prm = input(msg)
-    if fov_h_prm != '#':
-        try:
-            while not (0 < float(fov_h_prm) < 360):
-                fov_h_prm = input(msg)
-                if fov_h_prm == '#':
-                    exit()
-        except ValueError as e:
-            raise Exception("Expecting numeric value!") from e
-    return fov_h_prm
-
-
-def read_fov_v_param():
-    msg = "Enter observation vertical field of view (fov_v) " \
-        "[between -90 and 90 inclusive] (or # to exit): "
-    fov_v_prm = input(msg)
-    if fov_v_prm != '#':
-        try:
-            while not (-90 <= float(fov_v_prm) <= 90):
-                fov_v_prm = input(msg)
-                if fov_v_prm == '#':
-                    exit()
-        except ValueError as e:
-            raise Exception("Expecting numeric value!") from e
-    return fov_v_prm
+    return param
 
 
 def read_top_n_param():
@@ -264,10 +223,10 @@ def main():
 
     validate_input_file_control_num(INPUT_FILE_NAME, FILE_HEADER_PATTERN)
 
-    ra_param = read_ra_param()
-    decl_param = read_decl_param()
-    fov_h_param = read_fov_h_param()
-    fov_v_param = read_fov_v_param()
+    ra_param = read_params(msg_read_param('RA', 0, 360), 0, 360)
+    decl_param = read_params(msg_read_param('DEC', -90, 90), -90, 90)
+    fov_h_param = read_params(msg_read_param('FOV_H', 0, 360), 0, 360)
+    fov_v_param = read_params(msg_read_param('FOV_V', -90, 90), -90, 90)
     top_N_param = read_top_n_param()
 
     in_dataset = read_input_file(INPUT_FILE_NAME,
