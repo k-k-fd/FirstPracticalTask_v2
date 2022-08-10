@@ -153,15 +153,15 @@ def process_dataset(in_ds, contains_colheaders, ra_param, decl_param,
             col_ra = float(row.get(in_cols.get('2')))
             col_decl = float(row.get(in_cols.get('3')))
             col_bright = float(row.get(in_cols.get('4')))
-            if check_object_in_fov(float(col_ra), float(col_decl),
-                                   min_ras(float(ra_param),
-                                           float(fov_h_param)),
-                                   max_ras(float(ra_param),
-                                           float(fov_h_param)),
-                                   min_dcl(float(decl_param),
-                                           float(fov_v_param)),
-                                   max_dcl(float(decl_param),
-                                           float(fov_v_param))):
+            if check_object_in_fov(col_ra, col_decl,
+                                   min_ras(ra_param,
+                                           fov_h_param),
+                                   max_ras(ra_param,
+                                           fov_h_param),
+                                   min_dcl(decl_param,
+                                           fov_v_param),
+                                   max_dcl(decl_param,
+                                           fov_v_param)):
                 col_dist = calc_dist(ra_param, col_ra, decl_param, col_decl)
                 row_dict.update({'ID': col_id})
                 row_dict.update({'RA': col_ra})
