@@ -14,27 +14,21 @@ def read_config(conf_file):
         raise FileNotFoundError(conf_file, " not found")
     else:
         config.read(conf_file)
-        input_file_name = config['IN']['INPUT_FILE_NAME']
-        input_file_contains_fileheader = bool(
-            config['IN']['INPUT_FILE_CONTAINS_FILEHEADER'])
-        input_file_contains_colheaders = bool(
-            config['IN']['INPUT_FILE_CONTAINS_COLHEADERS'])
-        input_cols = dict(json.loads(config['IN']['INPUT_COLS']))
-        file_header_pattern = config['IN']['FILE_HEADER_PATTERN']
-        output_dt_pattern = config['OUT']['OUTPUT_DT_PATTERN']
-        output_col_headers = list(
-            config['OUT']['OUTPUT_COL_HEADERS'].split(','))
-        output_file_path = config['OUT']['OUTPUT_FILE_PATH']
-        output_order_by = config['OUT']['OUTPUT_ORDER_BY']
-        return input_file_name, \
-            input_file_contains_fileheader, \
-            input_file_contains_colheaders, \
-            input_cols, \
-            file_header_pattern, \
-            output_dt_pattern, \
-            output_col_headers, \
-            output_file_path, \
-            output_order_by
+        conf_dict = {
+            'input_file_name': config['IN']['INPUT_FILE_NAME'],
+            'input_file_contains_fileheader': bool(
+                config['IN']['INPUT_FILE_CONTAINS_FILEHEADER']),
+            'input_file_contains_colheaders': bool(
+                config['IN']['INPUT_FILE_CONTAINS_COLHEADERS']),
+            'input_cols': dict(json.loads(config['IN']['INPUT_COLS'])),
+            'file_header_pattern': config['IN']['FILE_HEADER_PATTERN'],
+            'output_dt_pattern': config['OUT']['OUTPUT_DT_PATTERN'],
+            'output_col_headers': list(
+                config['OUT']['OUTPUT_COL_HEADERS'].split(',')),
+            'output_file_path': config['OUT']['OUTPUT_FILE_PATH'],
+            'output_order_by': config['OUT']['OUTPUT_ORDER_BY']
+        }
+        return conf_dict
 
 
 def validate_input_file_control_num(in_file_name, file_hdr_pttrn):
@@ -105,7 +99,6 @@ def read_input_file(input_file, input_file_contains_filehdr):
         for row_num in range(len(input_file_content)):
             row_as_lst = input_file_content[row_num].split('\t')
             enum_row_as_lst = {idx: v for idx, v in enumerate(row_as_lst)}
-            # row = dict(enumerate(input_file_content[row_num].split('\t')))
             in_ds.update({row_num: enum_row_as_lst})
     return in_ds
 
@@ -137,23 +130,19 @@ def process_dataset(in_ds, contains_colheaders, ra_param, decl_param,
     if contains_colheaders:
         del in_ds[0]
     for r_id, row in in_ds.items():
-        if row.get(in_cols.get('1')) != '' \
-                and row.get(in_cols.get('2')) != '' \
-                and row.get(in_cols.get('3')) != '' \
-                and row.get(in_cols.get('4')) != '':
-            col_id = int(row.get(in_cols.get('1')))
-            col_ra = float(row.get(in_cols.get('2')))
-            col_decl = float(row.get(in_cols.get('3')))
-            col_bright = float(row.get(in_cols.get('4')))
+        if row.get(in_cols.get('source_id')) != '' \
+                and row.get(in_cols.get('ra_ep2000')) != '' \
+                and row.get(in_cols.get('dec_ep2000')) != '' \
+                and row.get(in_cols.get('b')) != '':
+            col_id = int(row.get(in_cols.get('source_id')))
+            col_ra = float(row.get(in_cols.get('ra_ep2000')))
+            col_decl = float(row.get(in_cols.get('dec_ep2000')))
+            col_bright = float(row.get(in_cols.get('b')))
             if check_object_in_fov(col_ra, col_decl,
-                                   min_ras_dcl(ra_param,
-                                           fov_h_param),
-                                   max_ras_dcl(ra_param,
-                                           fov_h_param),
-                                   min_ras_dcl(decl_param,
-                                           fov_v_param),
-                                   max_ras_dcl(decl_param,
-                                           fov_v_param)):
+                                   min_ras_dcl(ra_param, fov_h_param),
+                                   max_ras_dcl(ra_param, fov_h_param),
+                                   min_ras_dcl(decl_param, fov_v_param),
+                                   max_ras_dcl(decl_param, fov_v_param)):
                 col_dist = calc_dist(ra_param, col_ra, decl_param, col_decl)
                 row_dict.update({'ID': col_id})
                 row_dict.update({'RA': col_ra})
@@ -208,39 +197,48 @@ def main():
     logging.basicConfig(filename='app.log', filemode='w',
                         format='%(name)s - %(levelname)s - %(message)s')
 
-    INPUT_FILE_NAME, INPUT_FILE_CONTAINS_FILEHEADER, \
-        INPUT_FILE_CONTAINS_COLHEADERS, INPUT_COLS, FILE_HEADER_PATTERN,\
-        OUTPUT_DT_PATTERN, OUTPUT_COL_HEADERS, OUTPUT_FILE_PATH,\
-        OUTPUT_ORDER_BY = read_config(config_file)
+    conf_dct = read_config(config_file)
+    conf_input_file = conf_dct.get('input_file_name')
+    conf_infile_contains_fileheader = \
+        conf_dct.get('input_file_contains_fileheader')
+    conf_infile_contains_colheader = \
+        conf_dct.get('input_file_contains_colheaders')
+    conf_in_cols = conf_dct.get('input_cols')
+    conf_infile_header_pattern = conf_dct.get('file_header_pattern')
+    conf_outfile_dt_pattern = conf_dct.get('output_dt_pattern')
+    conf_outfile_col_headers = conf_dct.get('output_col_headers')
+    conf_outfile_path = conf_dct.get('output_file_path')
+    conf_outfile_order_by = conf_dct.get('output_order_by')
 
-    validate_input_file_control_num(INPUT_FILE_NAME, FILE_HEADER_PATTERN)
+    validate_input_file_control_num(conf_input_file,
+                                    conf_infile_header_pattern)
 
     ra_param = read_params(msg_read_param('RA', 0, 360), 0, 360)
     decl_param = read_params(msg_read_param('DEC', -90, 90), -90, 90)
     fov_h_param = read_params(msg_read_param('FOV_H', 0, 360), 0, 360)
     fov_v_param = read_params(msg_read_param('FOV_V', -90, 90), -90, 90)
-    top_N_param = read_top_n_param()
+    top_n_param = read_top_n_param()
 
-    in_dataset = read_input_file(INPUT_FILE_NAME,
-                                 INPUT_FILE_CONTAINS_FILEHEADER)
+    in_dataset = read_input_file(conf_input_file,
+                                 conf_infile_contains_fileheader)
 
     stg_dataset = process_dataset(
         in_dataset,
-        INPUT_FILE_CONTAINS_COLHEADERS,
+        conf_infile_contains_colheader,
         float(ra_param),
         float(decl_param),
         float(fov_h_param),
         float(fov_v_param),
-        INPUT_COLS)
+        conf_in_cols)
 
-    final_dataset = prep_final_dataset(stg_dataset, int(top_N_param),
-                                       OUTPUT_ORDER_BY)
+    final_dataset = prep_final_dataset(stg_dataset, int(top_n_param),
+                                       conf_outfile_order_by)
 
-    datetime_stamp = datetime.now().strftime(OUTPUT_DT_PATTERN)
-    output_file = os.path.join(OUTPUT_FILE_PATH,
+    datetime_stamp = datetime.now().strftime(conf_outfile_dt_pattern)
+    output_file = os.path.join(conf_outfile_path,
                                '{}.csv'.format(datetime_stamp))
 
-    write_output_file(final_dataset, output_file, OUTPUT_COL_HEADERS)
+    write_output_file(final_dataset, output_file, conf_outfile_col_headers)
 
     print('\nCompleted! Check "{}"'.format(output_file))
 
