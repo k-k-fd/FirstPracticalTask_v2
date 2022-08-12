@@ -134,7 +134,7 @@ def process_dataset(in_ds, contains_colheaders, ra_param, decl_param,
         in_cols_dec = row.get(in_cols.get('dec_ep2000'))
         in_cols_b = row.get(in_cols.get('b'))
         min_ra_fovh = min_ras_dcl(ra_param, fov_h_param)
-        max_ra_fovh = min_ras_dcl(decl_param, fov_v_param)
+        max_ra_fovh = max_ras_dcl(ra_param, fov_h_param)
         min_dec_fovv = min_ras_dcl(decl_param, fov_v_param)
         max_dec_fovv = max_ras_dcl(decl_param, fov_v_param)
         chk_input_cols_non_blank([in_cols_in, in_cols_ra,
@@ -230,6 +230,9 @@ def main():
         float(fov_h_param),
         float(fov_v_param),
         conf_in_cols)
+
+    if not stg_dataset:
+        raise Exception("Output is blank!")
 
     final_dataset = prep_final_dataset(stg_dataset, int(top_n_param),
                                        conf_outfile_order_by)
