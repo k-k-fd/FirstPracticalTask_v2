@@ -54,22 +54,16 @@ def validate_input_file_control_num(in_file_name, file_hdr_pttrn):
 
 def msg_read_param(p_name, p_min, p_max):
     return "Enter " + p_name + " in degrees "\
-        + "[between " + str(p_min) + " and " + str(p_max) + "]"\
-        + " (or # to exit): "
+        + "[between " + str(p_min) + " and " + str(p_max) + "]:"
 
 
 def read_params(msg_to_read, p_min, p_max):
     param = input(msg_to_read)
-    if param != '#':
-        try:
-            while not (p_min <= float(param) <= p_max):
-                param = input(msg_to_read)
-                if param == '#':
-                    exit()
-        except ValueError as e:
-            raise Exception("Expecting numeric value!") from e
-    else:
-        exit()
+    try:
+        while not (p_min <= float(param) <= p_max):
+            param = input(msg_to_read)
+    except ValueError as e:
+        raise Exception("Expecting numeric value!") from e
     return param
 
 
@@ -77,15 +71,12 @@ def read_top_n_param():
     msg = "Enter the number of the brightest objects to have in the output " \
         "(top N) [whole positive number]: "
     top_n_prm = input(msg)
-    if top_n_prm != '#':
-        try:
-            while not (int(top_n_prm) > 0):
-                top_n_prm = input(msg)
-                if top_n_prm == '#':
-                    exit()
-        except ValueError as e:
-            raise Exception("Expecting numeric value!") from e
-        return top_n_prm
+    try:
+        while not (int(top_n_prm) > 0):
+            top_n_prm = input(msg)
+    except ValueError as e:
+        raise Exception("Expecting numeric value!") from e
+    return top_n_prm
 
 
 def read_input_file(input_file, input_file_contains_filehdr):
@@ -96,10 +87,10 @@ def read_input_file(input_file, input_file_contains_filehdr):
                                  1:]  # skip file header
         else:
             input_file_content = input_file.read().splitlines()
-        for row_num in range(len(input_file_content)):
-            row_as_lst = input_file_content[row_num].split('\t')
+        for row_num, row in enumerate(input_file_content):
+            row_as_lst = row.split('\t')
             enum_row_as_lst = {idx: v for idx, v in enumerate(row_as_lst)}
-            in_ds.update({row_num: enum_row_as_lst})
+            in_ds[row_num] = enum_row_as_lst
     return in_ds
 
 
@@ -122,38 +113,48 @@ def calc_dist(ra_1, ra_2, decl_1, decl_2):
     return math.sqrt((ra_2 - ra_1) ** 2 + (decl_2 - decl_1) ** 2)
 
 
+def chk_input_cols_non_blank(lst_cols):
+    for each_col in lst_cols:
+        if each_col == '':
+            raise Exception('Missing value!')
+        else:
+            continue
+    return True
+
+
 def process_dataset(in_ds, contains_colheaders, ra_param, decl_param,
                     fov_h_param, fov_v_param, in_cols):
     staging_ds = {}
-    row_dict = {}
     staging_ds_row_id = 0
     if contains_colheaders:
         del in_ds[0]
     for r_id, row in in_ds.items():
-        if row.get(in_cols.get('source_id')) != '' \
-                and row.get(in_cols.get('ra_ep2000')) != '' \
-                and row.get(in_cols.get('dec_ep2000')) != '' \
-                and row.get(in_cols.get('b')) != '':
-            col_id = int(row.get(in_cols.get('source_id')))
-            col_ra = float(row.get(in_cols.get('ra_ep2000')))
-            col_decl = float(row.get(in_cols.get('dec_ep2000')))
-            col_bright = float(row.get(in_cols.get('b')))
-            if check_object_in_fov(col_ra, col_decl,
-                                   min_ras_dcl(ra_param, fov_h_param),
-                                   max_ras_dcl(ra_param, fov_h_param),
-                                   min_ras_dcl(decl_param, fov_v_param),
-                                   max_ras_dcl(decl_param, fov_v_param)):
-                col_dist = calc_dist(ra_param, col_ra, decl_param, col_decl)
-                row_dict.update({'ID': col_id})
-                row_dict.update({'RA': col_ra})
-                row_dict.update({'DEC': col_decl})
-                row_dict.update({'BRI': col_bright})
-                row_dict.update({'DIST': col_dist})
-                staging_ds.update({staging_ds_row_id: row_dict})
-            staging_ds_row_id += 1
-        else:
-            raise Exception('Missing value!')
-        row_dict = {}
+        in_cols_in = row.get(in_cols.get('source_id'))
+        in_cols_ra = row.get(in_cols.get('ra_ep2000'))
+        in_cols_dec = row.get(in_cols.get('dec_ep2000'))
+        in_cols_b = row.get(in_cols.get('b'))
+        min_ra_fovh = min_ras_dcl(ra_param, fov_h_param)
+        max_ra_fovh = min_ras_dcl(decl_param, fov_v_param)
+        min_dec_fovv = min_ras_dcl(decl_param, fov_v_param)
+        max_dec_fovv = max_ras_dcl(decl_param, fov_v_param)
+        chk_input_cols_non_blank([in_cols_in, in_cols_ra,
+                                  in_cols_dec, in_cols_b])
+        col_id = int(in_cols_in)
+        col_ra = float(in_cols_ra)
+        col_decl = float(in_cols_dec)
+        col_bright = float(in_cols_b)
+        if check_object_in_fov(col_ra, col_decl,
+                               min_ra_fovh, max_ra_fovh,
+                               min_dec_fovv, max_dec_fovv):
+            col_dist = calc_dist(ra_param, col_ra, decl_param, col_decl)
+            row_dict = {
+                'ID': col_id,
+                'RA': col_ra,
+                'BRI': col_bright,
+                'DIST': col_dist
+            }
+            staging_ds[staging_ds_row_id] = row_dict
+        staging_ds_row_id += 1
     return staging_ds
 
 
@@ -176,8 +177,7 @@ def prep_final_dataset(input_ds, top_n, col):
             top_n -= 1
     k_dict_to_return = 1
     for i in list_keys_to_return:
-        dict_to_return.update(
-            {k_dict_to_return: list(input_ds.get(i).values())})
+        dict_to_return[k_dict_to_return] = list(input_ds.get(i).values())
         k_dict_to_return += 1
     return dict_to_return
 
